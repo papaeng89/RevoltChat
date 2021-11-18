@@ -1,0 +1,137 @@
+version: '3.3'
+services:
+  # Vortex server
+  vortex:
+    image: revoltchat/vortex:0.3.0-alpha.1
+    container_name: Revolt_Vortex
+    restart: always
+    ports:
+#      - "${IP}:8080:8080"
+      - "$RTC_MIN_PORT-$RTC_MAX_PORT:$RTC_MIN_PORT-$RTC_MAX_PORT/tcp"
+      - "$RTC_MIN_PORT-$RTC_MAX_PORT:$RTC_MIN_PORT-$RTC_MAX_PORT/udp"
+    env_file:
+      - .env
+
+  # Redis server
+  redis:
+    image: eqalpha/keydb
+    container_name: Revolt_Redis
+    restart: always
+
+  # REVOLT API server (Delta)
+  api:
+    image: revoltchat/server:master
+    container_name: Revolt_Api
+    restart: always
+#    ports:
+#      - "${IP}:8000:8000"
+#      - "${IP}:9000:9000"
+    depends_on:
+      - database
+      - redis
+    extra_hosts:
+      - "${ADDRESS}:${IP}"
+    env_file:
+      - .env
+
+  # REVOLT Web App
+  web:
+    image: revoltchat/client:master
+    container_name: Revolt_WebApp
+    restart: always
+#    ports:
+#      - "${IP}:5000:5000"
+    env_file:
+      - .env
+
+  # MongoDB database
+  database:
+    image: mongo:4.4
+    container_name: Revolt_Mongo
+    restart: always
+    volumes:
+      - ./data/db:/data/db
+    env_file:
+      - .env
+
+  # S3-compatible storage server
+  minio:
+    image: minio/minio
+    container_name: Revolt_Minio
+    restart: always
+    command: server /data
+    volumes:
+      - ./data/minio:/data
+    env_file:
+      - .env
+
+  # Create buckets for minio.
+  createbuckets:
+    image: minio/mc
+    container_name: Revolt_Buckets
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      while ! curl -s --output /dev/null --connect-timeout 1 http://minio:9000; do echo 'Waiting minio...' && sleep 0.1; done;
+      /usr/bin/mc alias set minio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD;
+      /usr/bin/mc mb minio/attachments;
+      /usr/bin/mc mb minio/avatars;
+      /usr/bin/mc mb minio/backgrounds;
+      /usr/bin/mc mb minio/icons;
+      /usr/bin/mc mb minio/banners;
+      exit 0;
+      "
+    env_file:
+      - .env
+
+  # REVOLT file hosting service (Autumn)
+  autumn:
+    image: revoltchat/autumn
+    container_name: Revolt_Autumn
+    restart: always
+    depends_on:
+      - database
+      - createbuckets
+#    ports:
+#      - "${IP}:3000:3000"
+    env_file:
+      - .env
+
+  # REVOLT metadata and image proxy (January)
+  january:
+    image: revoltchat/january
+    container_name: Revolt_January
+#    ports:
+#      - "7000:3000"
+    restart: always
+
+  # REVOLT Nginx Reverse Proxy
+  nginx:
+    image: nginx
+    container_name: Revolt_Nginx
+    depends_on:
+      - api
+      - january
+      - vortex
+      - web
+      - autumn
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./configs/nginx:/etc/nginx/conf.d
+      - ./configs/certbot/conf:/etc/nginx/ssl
+      - ./configs/certbot/data:/var/www/certbot
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
+  # REVOLT Certbot
+  certbot:
+    image: certbot/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email ${LETSENCRYPT_MAIL} --agree-tos --no-eff-email -d ${ADDRESS}
+    volumes:
+      - ./configs/certbot/conf:/etc/letsencrypt
+      - ./configs/certbot/data:/var/www/certbot
+      - ./configs/certbot/logs:/var/log/letsencrypt
+    
