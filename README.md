@@ -1,6 +1,6 @@
 This is still a work-in-progress and some things may not work but for the most part everything has been tested without issue!
 
-## BE CARREFUL ##
+## BE CARREFUL
 
 The CI for the API server (revoltchat/server) is currently being reworked, I was having a few issues with building both amd64/arm64.
 
@@ -14,7 +14,7 @@ I hope to get this resolved soon, thank you.
 
 Related issue: https://github.com/revoltchat/delta/issues/116
 
-## Setup
+## SETUP
 
 Clone this repository.
 
@@ -27,33 +27,22 @@ chmod +x install.sh lib.sh
 
 Modify variables in `install.sh` file and edit according to your needs.
 
-export SERVICE_DOMAIN=[DOMAIN NAME]
-export SERVICE_NAME=[HOSTNAME]
-export SERVICE_ADDRESS=$SERVICE_NAME.$SERVICE_DOMAIN
-export SERVICE_IP=[LOCAL ADDRESS IP]
-export LETSENCRYPT_MAIL=[MAIL LETSENCRYPT]
-export PUBLIC_IP=[PUBLIC ADDRESS IP]
+export SERVICE_DOMAIN=**[DOMAIN NAME]**
+export SERVICE_NAME=**[HOSTNAME]**
+export SERVICE_IP=**[LOCAL ADDRESS IP]**
+export LETSENCRYPT_MAIL=**[MAIL LETSENCRYPT]**
+export PUBLIC_IP=**[PUBLIC ADDRESS IP]**
 
+after, run ./install.sh
 
+> ⚠️ This configuration works with letsencrypt certificat and https. 
 
-> ⚠️ The default configuration is intended for testing and only works on your local machine. If you want to deploy to a remote server, you need to edit the URLs in the `.env` file. \
-> If you get a network error when trying to log in, **double check your configuration before opening an issue.**
-
-```bash
-cp .env.example .env
-```
-
-Then bring up REVOLT:
-
-```bash
-docker-compose up -d
-```
 
 ## To-Do
 
 - Interactive setup.
 - Add Caddy.
-- Add voso.
+
 
 Base on :
  - https://github.com/jim3692/self-hosted
