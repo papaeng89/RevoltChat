@@ -28,9 +28,13 @@ chmod +x install.sh lib.sh
 Modify variables in `install.sh` file and edit according to your needs.
 
 export SERVICE_DOMAIN=**[DOMAIN NAME]**
+
 export SERVICE_NAME=**[HOSTNAME]**
+
 export SERVICE_IP=**[LOCAL ADDRESS IP]**
+
 export LETSENCRYPT_MAIL=**[MAIL LETSENCRYPT]**
+
 export PUBLIC_IP=**[PUBLIC ADDRESS IP]**
 
 after, run ./install.sh
