@@ -129,6 +129,7 @@ services:
   # REVOLT Certbot
   certbot:
     image: certbot/certbot
+    container_name: Revolt_Certbot
     command: certonly --webroot --webroot-path=/var/www/certbot --email ${LETSENCRYPT_MAIL} --agree-tos --no-eff-email -d ${ADDRESS}
     volumes:
       - ./configs/certbot/conf:/etc/letsencrypt
